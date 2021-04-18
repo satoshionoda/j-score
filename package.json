@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "run": "./node_modules/.bin/ts-node src/index.ts",
+    "build": "./node_modules/.bin/ts-node src/index.ts",
     "test": "npx jest"
   },
   "author": "Satoshi Onoda",
