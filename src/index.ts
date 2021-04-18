@@ -41,7 +41,7 @@ const parseMatches = (doc: HTMLDocument): MatchData[] => {
     const [homeScore, awayScore] = score ? score : [null, null];
     const yearCol = elm.querySelector("td:nth-child(1)");
     const dateCol = elm.querySelector("td:nth-child(4)");
-    const date = `${yearCol.textContent}/${parseDate(dateCol.textContent)}`;
+    const date = `${yearCol.textContent}-${parseDate(dateCol.textContent)}`;
 
     result.push({
       series,
@@ -56,8 +56,8 @@ const parseMatches = (doc: HTMLDocument): MatchData[] => {
 };
 
 const parseDate = (str: string): string => {
-  const found = /(\d+\/\d+)/.exec(str);
-  return found ? found[1] : "";
+  const found = /(\d+)\/(\d+)/.exec(str);
+  return found ? `${found[1]}-${found[2]}` : "";
 };
 
 const separateScore = (str: string): [number, number] => {
@@ -94,9 +94,4 @@ export type MatchData = {
   homeScore: number;
   awayScore: number;
   date: string;
-};
-
-export type MatchPoint = {
-  team: string;
-  pt: number[];
 };

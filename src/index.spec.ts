@@ -29,10 +29,10 @@ describe("parseDate", () => {
   const parseDate = __TEST__.parseDate;
   test("it should work", () => {
     const result1 = parseDate("02/27(土)");
-    expect(result1).toBe("02/27");
+    expect(result1).toBe("02-27");
 
     const result2 = parseDate("05/04(火・祝)");
-    expect(result2).toBe("05/04");
+    expect(result2).toBe("05-04");
   });
   test("it should return empty string when not found", () => {
     const result = parseDate("");
