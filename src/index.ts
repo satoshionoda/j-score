@@ -13,8 +13,22 @@ const url: [string, number, number | [number, number]][] = [
   ["j1", 2016, [411, 412]],
   ["j1", 2015, [397, 398]],
   ["j1", 2014, 372],
-  ["j1", 2013, 347],
-  ["j1", 2012, 322],
+  ["j2", 2021, 493],
+  ["j2", 2020, 478],
+  ["j2", 2019, 467],
+  ["j2", 2018, 445],
+  ["j2", 2017, 429],
+  ["j2", 2016, 413],
+  ["j2", 2015, 400],
+  ["j2", 2014, 373],
+  ["j3", 2021, 494],
+  ["j3", 2020, 479],
+  ["j3", 2019, 468],
+  ["j3", 2018, 446],
+  ["j3", 2017, 430],
+  ["j3", 2016, 414],
+  ["j3", 2015, 399],
+  ["j3", 2014, 380],
 ];
 
 const getData = async (
@@ -25,8 +39,14 @@ const getData = async (
   try {
     const res = await fetch(
       !Array.isArray(id)
-        ? `https://data.j-league.or.jp/SFMS01/search?competition_years=${year}&competition_frame_ids=1&competition_ids=${id}&tv_relay_station_name=`
-        : `https://data.j-league.or.jp/SFMS01/search?competition_years=${year}&competition_frame_ids=1&competition_ids=${id[0]}&competition_ids=${id[1]}&tv_relay_station_name=`
+        ? `https://data.j-league.or.jp/SFMS01/search?competition_years=${year}&competition_frame_ids=${findCategoryNumber(
+            category
+          )}&competition_ids=${id}&tv_relay_station_name=`
+        : `https://data.j-league.or.jp/SFMS01/search?competition_years=${year}&competition_frame_ids=${findCategoryNumber(
+            category
+          )}&competition_ids=${id[0]}&competition_ids=${
+            id[1]
+          }&tv_relay_station_name=`
     );
     const html = await res.text();
     const dom = new JSDOM(html);
@@ -41,15 +61,28 @@ const getData = async (
   }
 };
 
+const findCategoryNumber = (category): string => {
+  switch (category) {
+    case "j1":
+      return "1";
+    case "j2":
+      return "2";
+    case "j3":
+      return "3";
+    default:
+      throw new Error("no category found");
+  }
+};
+
 const parseMatches = (doc: HTMLDocument): MatchData[] => {
   const result: MatchData[] = [];
   doc.querySelectorAll(".search-table tbody tr").forEach((elm, i) => {
     const seriesCol = elm.querySelector("td:nth-child(3)");
     const series: number = findSeries(seriesCol.textContent);
-    const homeCol = elm.querySelector("td:nth-child(6) a");
-    const homeTeam = homeCol.textContent;
-    const awayCol = elm.querySelector("td:nth-child(8) a");
-    const awayTeam = awayCol.textContent;
+    const homeCol = elm.querySelector("td:nth-child(6)");
+    const homeTeam = homeCol.textContent.trim();
+    const awayCol = elm.querySelector("td:nth-child(8)");
+    const awayTeam = awayCol.textContent.trim();
     const scoreCol = elm.querySelector("td:nth-child(7)");
     const score: [number, number] = separateScore(scoreCol.textContent);
     const [homeScore, awayScore] = score ? score : [null, null];
