@@ -1,10 +1,11 @@
 import fetch from "cross-fetch";
 
+type Option = [string, number, number | [number, number]];
 const fs = require("fs-extra");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 //
-const url: [string, number, number | [number, number]][] = [
+const options: Option[] = [
   ["j1", 2021, 492],
   ["j1", 2020, 477],
   ["j1", 2019, 460],
@@ -31,23 +32,11 @@ const url: [string, number, number | [number, number]][] = [
   ["j3", 2014, 380],
 ];
 
-const getData = async (
-  category: string,
-  year: number,
-  id: number | [number, number]
-): Promise<string> => {
+const getData = async ([category, year, id]: Option): Promise<string> => {
   try {
-    const res = await fetch(
-      !Array.isArray(id)
-        ? `https://data.j-league.or.jp/SFMS01/search?competition_years=${year}&competition_frame_ids=${findCategoryNumber(
-            category
-          )}&competition_ids=${id}&tv_relay_station_name=`
-        : `https://data.j-league.or.jp/SFMS01/search?competition_years=${year}&competition_frame_ids=${findCategoryNumber(
-            category
-          )}&competition_ids=${id[0]}&competition_ids=${
-            id[1]
-          }&tv_relay_station_name=`
-    );
+    const urlBase = "https://data.j-league.or.jp/SFMS01/search";
+    const query = makeQuery([category, year, id]);
+    const res = await fetch(`${urlBase}?${query}`);
     const html = await res.text();
     const dom = new JSDOM(html);
     const matches: MatchData[] = parseMatches(dom.window.document);
@@ -59,6 +48,15 @@ const getData = async (
   } catch (e) {
     console.log(e);
   }
+};
+const makeQuery = ([category, year, id]: Option): string => {
+  const q1 = `competition_years=${year}`;
+  const q2 = `competition_frame_ids=${findCategoryNumber(category)}`;
+  const q3 = !Array.isArray(id)
+    ? `competition_ids=${id}`
+    : `competition_ids=${id[0]}&competition_ids=${id[1]}`;
+  const q4 = "tv_relay_station_name=";
+  return [q1, q2, q3, q4].join("&");
 };
 
 const findCategoryNumber = (category): string => {
@@ -141,8 +139,8 @@ export type MatchData = {
 
 // main loop
 (async () => {
-  for (const [category, year, id] of url) {
-    const result = await getData(category, year, id);
+  for (const option of options) {
+    const result = await getData(option);
     console.log("loaded", result);
   }
 })();
