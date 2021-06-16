@@ -42,7 +42,7 @@ const getData = async ([category, year, id]: Option): Promise<string> => {
     const matches: MatchData[] = parseMatches(dom.window.document);
     const dir = `${process.cwd()}/dist/`;
     await fs.ensureDir(dir);
-    await fs.writeJSON(`${dir}/matches-${category}-${year}.json`, matches);
+    await fs.writeJSON(`${dir}/${makeFileName(category, year)}`, matches);
     sleep(1000);
     return `${category} ${year}`;
   } catch (e) {
@@ -57,6 +57,9 @@ const makeQuery = ([category, year, id]: Option): string => {
     : `competition_ids=${id[0]}&competition_ids=${id[1]}`;
   const q4 = "tv_relay_station_name=";
   return [q1, q2, q3, q4].join("&");
+};
+const makeFileName = (category: string, year: number): string => {
+  return `matches-${category}-${year}.json`;
 };
 
 const findCategoryNumber = (category): string => {
@@ -122,6 +125,19 @@ const toHalfWidth = (input: string): string => {
   });
 };
 
+const hasCache = async ([category, year, id]: Option): Promise<boolean> => {
+  const path = `${process.cwd()}/cache/${makeFileName(category, year)}`;
+  const result = await fs.pathExists(path);
+  return result;
+};
+const copyFromCache = async ([category, year, id]: Option): Promise<string> => {
+  const src = `${process.cwd()}/cache/${makeFileName(category, year)}`;
+  const dir = `${process.cwd()}/dist/`;
+  await fs.ensureDir(dir);
+  await fs.copyFile(src, `${dir}${makeFileName(category, year)}`);
+  return `${category} ${year}`;
+};
+
 const sleep = (ms: number): Promise<null> => {
   return new Promise<null>((resolve) => setTimeout(resolve, ms));
 };
@@ -140,7 +156,13 @@ export type MatchData = {
 // main loop
 (async () => {
   for (const option of options) {
-    const result = await getData(option);
-    console.log("loaded", result);
+    const _hasCache: boolean = await hasCache(option);
+    if (_hasCache) {
+      const result = await copyFromCache(option);
+      console.log("from cache", result);
+    } else {
+      const result = await getData(option);
+      console.log("loaded", result);
+    }
   }
 })();
