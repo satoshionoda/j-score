@@ -1,41 +1,21 @@
 import fetch from "cross-fetch";
 
-type Option = [string, number, number | [number, number]];
+type Option = [string, number];
 const fs = require("fs-extra");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 //
-const options: Option[] = [
-  ["j1", 2021, 492],
-  ["j1", 2020, 477],
-  ["j1", 2019, 460],
-  ["j1", 2018, 444],
-  ["j1", 2017, 428],
-  ["j1", 2016, [411, 412]],
-  ["j1", 2015, [397, 398]],
-  ["j1", 2014, 372],
-  ["j2", 2021, 493],
-  ["j2", 2020, 478],
-  ["j2", 2019, 467],
-  ["j2", 2018, 445],
-  ["j2", 2017, 429],
-  ["j2", 2016, 413],
-  ["j2", 2015, 400],
-  ["j2", 2014, 373],
-  ["j3", 2021, 494],
-  ["j3", 2020, 479],
-  ["j3", 2019, 468],
-  ["j3", 2018, 446],
-  ["j3", 2017, 430],
-  ["j3", 2016, 414],
-  ["j3", 2015, 399],
-  ["j3", 2014, 380],
-];
+const options: Option[] = [];
+for (let i = 1993; i <= 2021; i++) {
+  options.push(["j1", i]);
+  i >= 1999 ? options.push(["j2", i]) : "";
+  i >= 2014 ? options.push(["j3", i]) : "";
+}
 
-const getData = async ([category, year, id]: Option): Promise<string> => {
+const getData = async ([category, year]: Option): Promise<string> => {
   try {
     const urlBase = "https://data.j-league.or.jp/SFMS01/search";
-    const query = makeQuery([category, year, id]);
+    const query = makeQuery([category, year]);
     const res = await fetch(`${urlBase}?${query}`);
     const html = await res.text();
     const dom = new JSDOM(html);
@@ -49,14 +29,11 @@ const getData = async ([category, year, id]: Option): Promise<string> => {
     console.log(e);
   }
 };
-const makeQuery = ([category, year, id]: Option): string => {
+const makeQuery = ([category, year]: Option): string => {
   const q1 = `competition_years=${year}`;
   const q2 = `competition_frame_ids=${findCategoryNumber(category)}`;
-  const q3 = !Array.isArray(id)
-    ? `competition_ids=${id}`
-    : `competition_ids=${id[0]}&competition_ids=${id[1]}`;
-  const q4 = "tv_relay_station_name=";
-  return [q1, q2, q3, q4].join("&");
+  const q3 = "tv_relay_station_name=";
+  return [q1, q2, q3].join("&");
 };
 const makeFileName = (category: string, year: number): string => {
   return `matches-${category}-${year}.json`;
@@ -125,12 +102,12 @@ const toHalfWidth = (input: string): string => {
   });
 };
 
-const hasCache = async ([category, year, id]: Option): Promise<boolean> => {
+const hasCache = async ([category, year]: Option): Promise<boolean> => {
   const path = `${process.cwd()}/cache/${makeFileName(category, year)}`;
   const result = await fs.pathExists(path);
   return result;
 };
-const copyFromCache = async ([category, year, id]: Option): Promise<string> => {
+const copyFromCache = async ([category, year]: Option): Promise<string> => {
   const src = `${process.cwd()}/cache/${makeFileName(category, year)}`;
   const dir = `${process.cwd()}/dist/`;
   await fs.ensureDir(dir);
