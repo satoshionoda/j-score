@@ -1,9 +1,11 @@
 import fetch from "cross-fetch";
+import { makeRankingData, RankInfo } from "./process-data";
 
-type Option = [string, number];
 const fs = require("fs-extra");
 const jsdom = require("jsdom");
+const path = require("path");
 const { JSDOM } = jsdom;
+type Option = [string, number];
 //
 const options: Option[] = [];
 for (let i = 1993; i <= 2021; i++) {
@@ -11,6 +13,19 @@ for (let i = 1993; i <= 2021; i++) {
   i >= 1999 ? options.push(["j2", i]) : "";
   i >= 2014 ? options.push(["j3", i]) : "";
 }
+
+const makeData = async () => {
+  for (const option of options) {
+    const _hasCache: boolean = await hasCache(option);
+    if (_hasCache) {
+      const result = await copyFromCache(option);
+      console.log("from cache", result);
+    } else {
+      const result = await getData(option);
+      console.log("loaded", result);
+    }
+  }
+};
 
 const getData = async ([category, year]: Option): Promise<string> => {
   try {
@@ -20,7 +35,7 @@ const getData = async ([category, year]: Option): Promise<string> => {
     const html = await res.text();
     const dom = new JSDOM(html);
     const matches: MatchData[] = parseMatches(dom.window.document);
-    const dir = `${process.cwd()}/dist/`;
+    const dir = path.join(process.cwd(), "dist");
     await fs.ensureDir(dir);
     await fs.writeJSON(`${dir}/${makeFileName(category, year)}`, matches);
     sleep(1000);
@@ -103,16 +118,43 @@ const toHalfWidth = (input: string): string => {
 };
 
 const hasCache = async ([category, year]: Option): Promise<boolean> => {
-  const path = `${process.cwd()}/cache/${makeFileName(category, year)}`;
-  const result = await fs.pathExists(path);
+  const cachePath = path.join(
+    process.cwd(),
+    "cache",
+    makeFileName(category, year)
+  );
+  const result = await fs.pathExists(cachePath);
   return result;
 };
 const copyFromCache = async ([category, year]: Option): Promise<string> => {
-  const src = `${process.cwd()}/cache/${makeFileName(category, year)}`;
-  const dir = `${process.cwd()}/dist/`;
+  const src = path.join(process.cwd(), "cache", makeFileName(category, year));
+  const dir = path.join(process.cwd(), "dist");
   await fs.ensureDir(dir);
-  await fs.copyFile(src, `${dir}${makeFileName(category, year)}`);
+  await fs.copyFile(src, path.join(dir, makeFileName(category, year)));
   return `${category} ${year}`;
+};
+
+const makeAllYearData = async () => {
+  const result: RankInfo[][][] = [];
+  const categories = ["j1", "j2", "j3"];
+  for (let i = 1993; i < 2021; i++) {
+    const yearData: RankInfo[][] = [];
+    categories.forEach((category) => {
+      const year = i;
+      const jsonPath = path.join(
+        process.cwd(),
+        "dist",
+        `matches-${category}-${year}.json`
+      );
+      if (fs.existsSync(jsonPath)) {
+        const rawData = JSON.parse(fs.readFileSync(jsonPath).toString());
+        const ranking = makeRankingData(rawData);
+        yearData.push(ranking);
+      }
+    });
+    result.push(yearData);
+  }
+  await fs.writeJSON(path.join(process.cwd(), "dist", "rankings.json"), result);
 };
 
 const sleep = (ms: number): Promise<null> => {
@@ -130,16 +172,7 @@ export type MatchData = {
   date: string;
 };
 
-// main loop
 (async () => {
-  for (const option of options) {
-    const _hasCache: boolean = await hasCache(option);
-    if (_hasCache) {
-      const result = await copyFromCache(option);
-      console.log("from cache", result);
-    } else {
-      const result = await getData(option);
-      console.log("loaded", result);
-    }
-  }
+  await makeData();
+  await makeAllYearData();
 })();
