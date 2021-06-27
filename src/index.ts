@@ -148,7 +148,7 @@ const makeAllYearData = async () => {
       );
       if (fs.existsSync(jsonPath)) {
         const rawData = JSON.parse(fs.readFileSync(jsonPath).toString());
-        const ranking = makeRankingData(rawData);
+        const ranking = makeRankingData(rawData, year);
         yearData.push(ranking);
       }
     });

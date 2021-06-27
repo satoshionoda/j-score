@@ -1,6 +1,9 @@
 import { isBefore, parseISO } from "date-fns";
 
-export const makeRankingData = (allMatches: MatchData[]): RankInfo[] => {
+export const makeRankingData = (
+  allMatches: MatchData[],
+  year: number
+): RankInfo[] => {
   const teamStats = processMatchStats(allMatches);
   return teamStats.map((item) => {
     const team = item.team;
@@ -17,7 +20,7 @@ export const makeRankingData = (allMatches: MatchData[]): RankInfo[] => {
     const draw: number = item.matches.filter(
       (match) => getMatchPoint(match, team) === 1
     ).length;
-    return { team, pt, gf, ga, gd, win, lose, draw };
+    return { team, pt, gf, ga, gd, win, lose, draw, year };
   });
 };
 
@@ -206,4 +209,5 @@ export type RankInfo = {
   win: number;
   lose: number;
   draw: number;
+  year: number;
 };
