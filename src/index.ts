@@ -8,7 +8,7 @@ const { JSDOM } = jsdom;
 type Option = [string, number];
 //
 const options: Option[] = [];
-for (let i = 1993; i <= 2022; i++) {
+for (let i = 1993; i <= 2023; i++) {
   options.push(["j1", i]);
   i >= 1999 ? options.push(["j2", i]) : "";
   i >= 2014 ? options.push(["j3", i]) : "";
