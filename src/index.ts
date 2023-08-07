@@ -5,10 +5,11 @@ const fs = require("fs-extra");
 const jsdom = require("jsdom");
 const path = require("path");
 const { JSDOM } = jsdom;
+const currentYear = 2023;
 type Option = [string, number];
 //
 const options: Option[] = [];
-for (let i = 1993; i <= 2023; i++) {
+for (let i = 1993; i <= currentYear; i++) {
   options.push(["j1", i]);
   i >= 1999 ? options.push(["j2", i]) : "";
   i >= 2014 ? options.push(["j3", i]) : "";
@@ -137,7 +138,7 @@ const copyFromCache = async ([category, year]: Option): Promise<string> => {
 const makeAllYearData = async () => {
   const result: RankInfo[][][] = [];
   const categories = ["j1", "j2", "j3"];
-  for (let i = 1993; i < 2022; i++) {
+  for (let i = 1993; i < currentYear; i++) {
     const yearData: RankInfo[][] = [];
     categories.forEach((category) => {
       const year = i;
